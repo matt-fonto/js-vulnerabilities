@@ -91,3 +91,40 @@ app.get("api/data", async (req, res) => {
   }
 });
 ```
+
+## Vulnerability 3: Timing attack
+
+Definition
+
+- An attacker checks how much time it takes to execute some combination and uses this information to determine which could be the solution. E.g., like dialing all possible numbers, until it got to 7890 ("the right combination")
+
+Solution
+
+- Operations should always take the same amount of time regardless of the input
+
+```js
+import crypto from "crypto";
+
+export function checkToken(userSupplied) {
+  // a b c
+  // a b e -> it takes "longer" to return false
+
+  // it could "brute force" and see which strings take "longer" than others and start "cracking" the combination
+
+  const account = account.retrieveToken(userSupplied);
+
+  if (account) {
+    // instead of doing ===, which is vulnerable to "timing attacks"
+    // if (account.service.token === user.service.token) {
+    //   return true;
+    // }
+
+    // we use a less transparent function
+    if (crypto.timingSafeEqual(account.service.token, user.service.token)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+```
