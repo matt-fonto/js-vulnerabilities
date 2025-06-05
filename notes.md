@@ -1,4 +1,4 @@
-### Vulnerability 1: Cross-site Scripting
+## Vulnerability 1: Cross-site Scripting (XSS)
 
 Definition:
 
@@ -32,6 +32,7 @@ function QueryParamsDemo() {
 
   // https://mywebsite.com/?redirect=javacript://doSomethingBad()
 
+  // solution -> validate the url
   function validateURL(url) {
     // we want to check the protocol
     const userSuppliedURL = new URL(url);
@@ -52,4 +53,41 @@ function QueryParamsDemo() {
 }
 ```
 
-#### Solution
+## Vulnerability 2: Server-side request forgery (ssrf)
+
+Definition:
+
+- Attacker manipulates the server into making a request to internal resource. What can lead to unauthorized access or data exposure
+
+Solution:
+
+- Define clearly what the request can "request"
+
+```js
+app.get("api/data", async (req, res) => {
+  const url = req.query.url;
+  // https://myapp.com/api/data?url=https://internal.myapp.com/data/data1.json
+  // https://myapp.com/api/data?url=https://internal.myapp.com/data/data2.json
+  // https://myapp.com/api/data?url=https://internal.myapp.com/data/confidential.json -> how do we avoid this getting exposed?
+
+  const allowedURLs = [
+    "https://internal.myapp.com/data/data1.json",
+    "https://internal.myapp.com/data/data2.json",
+  ];
+
+  try {
+    // solution -> establish requests boundaries
+    if (!allowedURLs.includes(url)) {
+      return res.status(400).json({ error: "Bad request" });
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    res.status(200).json({ data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ err: err.msg });
+  }
+});
+```
