@@ -225,3 +225,34 @@ const emailRegex =
     return req.status(200).send({ valid: true });
   });
 ```
+
+## Vulnerability 7: Container Security Misconfiguration
+
+Definition
+
+- Giving too much permissions to a container user by setting it as root
+
+Solution
+
+- Restrict permissions by creating and using another user, not root, to manage the container
+
+```dockerfile
+FROM node:16
+
+# Create app dir
+WORKDIR /user/src/app
+
+# Install app deps
+COPY package*.json ./
+
+# Set user -> by setting the user as root, we give it too many privileges
+USER root
+
+RUN npm install
+
+# Bundle app source
+COPY . .
+
+EXPOSE 8080
+CMD ["node", "server.js"]
+```
