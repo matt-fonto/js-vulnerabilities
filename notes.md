@@ -263,6 +263,10 @@ Definition
 
 - User input can set properties on an object that it shouldn't
 
+Solution
+
+- Be very clear about what properties the req.body can set
+
 ```js
 import { encryptPassword } from "./utils/password";
 
@@ -291,5 +295,32 @@ app.post("/signup", (req, res) => {
       }
     }
   );
+});
+```
+
+## Vulnerability 9: Host-Header Injection Attack
+
+Definition
+
+- Using the host header as one of the params of the URL
+
+Solution
+
+- Avoid using the host header
+
+```js
+app.post("/generate-pwd-reset-url", async function (req, res) {
+  const customer = await customerdb.findOne(req.body.email);
+  const resetToken = await generatePwdResetToken(customer.id);
+
+  // avoid this
+  // const resetPwdURL = `${req.header(
+  //   "host"
+  // )}/passwordReset?token=${resetToken}&id=${customer.id}`;
+
+  // use an environment variable
+  const resetPwdURL = `${process.env.HOST_URL}/passwordReset?token=${resetToken}&id=${customer.id}`;
+
+  return res.json({ resetPwdUrl });
 });
 ```
