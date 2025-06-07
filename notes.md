@@ -256,3 +256,40 @@ COPY . .
 EXPOSE 8080
 CMD ["node", "server.js"]
 ```
+
+## Vulnerability 8: Mass Assignment Attack
+
+Definition
+
+- User input can set properties on an object that it shouldn't
+
+```js
+import { encryptPassword } from "./utils/password";
+
+app.post("/signup", (req, res) => {
+  db.users.find(
+    {
+      username: req.body.username,
+    },
+    async (err, result) => {
+      if (err) {
+        return res.status(500).json({ msg: "Error" });
+        // if no user is found and no error present, add the user to the db
+      } else if (result.length === 0) {
+        // because we allow the whole body to be set, the attack could set: username, password, email, isAdmin -> nobody should be able to "set" itself as admin from the req.body
+        // await db.users.insert(req.body); // don't set the whole thing
+
+        await db.users.insert({
+          username: String(req.body.username),
+          email: String(req.body.email),
+          password: encryptPassowrd(req.body.password),
+        }); // instead pass the fields that should be possibile to be set through the req.body
+
+        return res.status(200);
+      } else {
+        return res.status(409);
+      }
+    }
+  );
+});
+```
