@@ -128,3 +128,28 @@ export function checkToken(userSupplied) {
   return false;
 }
 ```
+
+## Vulnerability 4: Prototype Pollution
+
+- JavaScript is a prototype-based language
+- In JavaScript, every object has a parent called prototype that inherits its methods from
+
+```js
+const SOME_OBJ = {};
+
+app.get("/validateToken", (req, res) => {
+  if (req.header("token")) {
+    const token = Buffer.from(req.header("token"), "base64");
+
+    // this can be used with `__proto__`, which an attacker can use to exploit
+    // if (SOME_OBJ[token] && token) {
+
+    // instead, we can use:
+    if (SOME_OBJ.hasOwnProperty(token) && token) {
+      return res.send("true");
+    }
+  }
+
+  return res.send("false");
+});
+```
