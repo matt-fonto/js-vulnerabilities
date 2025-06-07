@@ -131,8 +131,23 @@ export function checkToken(userSupplied) {
 
 ## Vulnerability 4: Prototype Pollution
 
+Definition
+
 - JavaScript is a prototype-based language
 - In JavaScript, every object has a parent called prototype that inherits its methods from
+- Attacker adds arbitraty properties to global object prototypes
+
+### What is a prototype in JS?
+
+When we create an object `const obj = {}`, this object already has many attributes and methods defined for it. e.g., `toString` method
+
+- These attributes and methods come from the prototype
+- Each object is linked to a "prototype"
+- When we invoke `toString`, it will check if we defined the method for the given object, else it will look on the objects prototype
+
+Solution:
+
+- Make sure that we validate the the object check to avoid being exposed to the use of `__proto__`
 
 ```js
 const SOME_OBJ = {};
@@ -152,4 +167,61 @@ app.get("/validateToken", (req, res) => {
 
   return res.send("false");
 });
+```
+
+## Vulnerability 5: NoSQL Injection
+
+- Attacker interferes with queries that an application makes to a NoSQL db
+
+```js
+app.post("/user", (req, res) => {
+  // assume user is authenticated
+
+  // nothing is preventing our request from passing, instead of a string, as an object, e.g.:
+  // {$ne:null} -> fetching all users
+
+  if (typeof req.body.user !== "string") {
+    return res.status(400).json({ message: "Invalid username" });
+  }
+
+  db.collection("users").find(
+    {
+      username: req.body.username,
+    },
+    (err, result) => {
+      if (err || !result) {
+        return res.status(500).send({ message: "No user found" });
+      } else {
+        return res.status(200).send(result);
+      }
+    }
+  );
+});
+```
+
+## Vulnerability 6: Regular expression Denial of Service - ReDoS
+
+Defition:
+
+- Makes the system stop working due to "hanging" on some inputs
+
+Solution:
+
+- Use regex libs
+
+```js
+const validator = require("validator");
+
+const emailRegex =
+  /* _complexRegex_ */ // instead of creating our own regex, we can use `validator` lib
+
+  app.post("/validateEmail", (req, res) => {
+    const email = req.body.email;
+
+    if (!email || !validator.isEmail(email)) {
+      return res.status(400).send({ error: "Invalid email" });
+    }
+
+    return req.status(200).send({ valid: true });
+  });
 ```
